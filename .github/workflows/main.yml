@@ -17,5 +17,3 @@ jobs:
 
       - name: run echo
         run: echo "Hello, world!"
-
-      -name: lint
