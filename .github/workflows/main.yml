@@ -6,22 +6,21 @@ on:
           - main
 
 jobs:
-    hello:
-      runs-on: ubuntu-latest
+  hello:
+    runs-on: ubuntu-latest
 
-      steps:
-      - uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Run Linter Check
-        uses: devops-actions/actionlint@v0.1.3
+      - name: Run Linter Check via Docker
+        run: docker run --rm -v "$(pwd):/pwd" --workdir /pwd rhysd/actionlint:latest
 
-      - name: Pre-Phase (Pre-flight checks)
+      - name: Pre-Phase (Environment & .env Setup)
         run: |
-          echo "Running pre-flight environment checks..."
-          echo "Checking runner disk space and environment..."
-          df -h
-          echo "Pre-flight checks passed successfully!"
-
+          echo "Running pre-phase environment setup..."
+          
+          # Writing configuration to .env
           echo "Writing configuration to .env..."
           cat <<EOF > .env
           HOMELAB_NODE=swissland-cluster
@@ -30,38 +29,37 @@ jobs:
           FUN_FACT="Proxmox ZFS mirrors save the day!"
           EOF
 
-          echo "Loading .env variables into GitHub environment ($GITHUB_ENV)..."
+          echo "Loading .env variables into GitHub environment..."
           while IFS= read -r line || [ -n "$line" ]; do
-            # Skip empty lines or comments
             [[ -z "$line" || "$line" =~ ^# ]] && continue
-            echo "$line" >> $GITHUB_ENV
+            echo "$line" >> "$GITHUB_ENV"
           done < .env
 
           echo "Environment variables loaded successfully!"
           echo "Target Node: ${{ env.HOMELAB_NODE }}"
           echo "Current Environment: ${{ env.BUILD_ENV }}"
 
-
-      - name: Build and Run Temp Docker Container
+      - name: Build Phase (Containerized)
         run: |
-          echo "Building temporary Docker image..."
-          # Create a quick inline Dockerfile for testing
-          echo -e "FROM alpine:latest\nCMD [\"echo\", \"Hello from inside the temporary container!\"]" > Dockerfile
+          echo "Creating temporary Dockerfile..."
+          echo -e "FROM alpine:latest\nCMD [\"echo\", \"Hello from inside the temporary container! Building for node: ${HOMELAB_NODE}\"]" > Dockerfile
           
-          echo "Building image..."
+          echo "Building Docker image..."
           docker build -t temp-hello-app .
           
-          echo "Running container ephemerally (--rm)..."
+          echo "Running container with auto-cleanup (--rm)..."
           docker run --rm temp-hello-app
 
-      - name: run echo
-        run: echo "Hello, world!"
+      - name: Run echo with Env Vars
+        run: |
+          echo "Hello, world from pipeline!"
+          echo "Running on node: $HOMELAB_NODE"
+          echo "Fun fact of the day: $FUN_FACT"
 
       - name: Post-Phase (Cleanup & Teardown)
-        if: always() # Ensures this runs even if previous steps fail
+        if: always()
         run: |
           echo "Running post-phase cleanup..."
-          echo "Pruning unused Docker images and build files..."
           docker rmi temp-hello-app || true
-          rm -f Dockerfile
+          rm -f Dockerfile .env
           echo "Cleanup complete. Runner is pristine!"
