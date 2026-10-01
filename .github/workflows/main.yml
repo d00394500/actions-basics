@@ -15,5 +15,18 @@ jobs:
       - name: Run Linter Check
         uses: devops-actions/actionlint@v0.1.3
 
+
+      - name: Build and Run Temp Docker Container
+        run: |
+          echo "Building temporary Docker image..."
+          # Create a quick inline Dockerfile for testing
+          echo -e "FROM alpine:latest\nCMD [\"echo\", \"Hello from inside the temporary container!\"]" > Dockerfile
+          
+          echo "Building image..."
+          docker build -t temp-hello-app .
+          
+          echo "Running container ephemerally (--rm)..."
+          docker run --rm temp-hello-app
+
       - name: run echo
         run: echo "Hello, world!"
