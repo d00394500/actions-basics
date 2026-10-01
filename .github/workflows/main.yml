@@ -14,9 +14,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Linter Check via Docker
-        run: bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./bin/actionlint
+        run: actionlint
 
+        
       - name: Pre-Phase (Environment & .env Setup)
         run: |
           echo "Running pre-phase environment setup..."
