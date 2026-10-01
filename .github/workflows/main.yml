@@ -48,6 +48,7 @@ jobs:
       - name: Build Phase (Containerized)
         run: |
           echo "Creating temporary Dockerfile..."
+          
           echo -e "FROM alpine:latest\nCMD [\"echo\", \"Hello from inside the temporary container! Building for node: ${HOMELAB_NODE}\"]" > Dockerfile
           
           echo "Building Docker image..."
