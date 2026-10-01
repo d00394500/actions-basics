@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Linter Check via Docker
+      - name: Run Linter Check
         uses: devops-actions/actionlint@v0.1.3
 
 
