@@ -11,5 +11,11 @@ jobs:
 
       steps:
       - uses: actions/checkout@v2
+
+      - name: Run Linter Check
+        uses: rhysd/actionlint-action@v3
+
       - name: run echo
         run: echo "Hello, world!"
+
+      -name: lint
