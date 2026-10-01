@@ -22,6 +22,25 @@ jobs:
           df -h
           echo "Pre-flight checks passed successfully!"
 
+          echo "Writing configuration to .env..."
+          cat <<EOF > .env
+          HOMELAB_NODE=swissland-cluster
+          PROJECT_NAME=hello-world-action
+          BUILD_ENV=staging
+          FUN_FACT="Proxmox ZFS mirrors save the day!"
+          EOF
+
+          echo "Loading .env variables into GitHub environment ($GITHUB_ENV)..."
+          while IFS= read -r line || [ -n "$line" ]; do
+            # Skip empty lines or comments
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            echo "$line" >> $GITHUB_ENV
+          done < .env
+
+          echo "Environment variables loaded successfully!"
+          echo "Target Node: ${{ env.HOMELAB_NODE }}"
+          echo "Current Environment: ${{ env.BUILD_ENV }}"
+
 
       - name: Build and Run Temp Docker Container
         run: |
@@ -37,3 +56,12 @@ jobs:
 
       - name: run echo
         run: echo "Hello, world!"
+
+      - name: Post-Phase (Cleanup & Teardown)
+        if: always() # Ensures this runs even if previous steps fail
+        run: |
+          echo "Running post-phase cleanup..."
+          echo "Pruning unused Docker images and build files..."
+          docker rmi temp-hello-app || true
+          rm -f Dockerfile
+          echo "Cleanup complete. Runner is pristine!"
